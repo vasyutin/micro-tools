@@ -1,10 +1,13 @@
 //---------------------------------------------------------------------------
 // ToHex
-// Convert binary file to C/C++ header file containing source file as a char array.
+//
+// Converts binary file to C/C++ header file containing source file as an array 
+// of chars.
+//
 // Written by Sergey Vasyutin (sergey [at] vasyut.in).
 //---------------------------------------------------------------------------
-
 #include <stdio.h>
+#include <ctype.h>
 #include <string>
 #include <algorithm>
 
@@ -22,7 +25,7 @@ printf(
 void ReplaceSymbols(std::string &String_)
 {
 for(std::string::iterator it = String_.begin(); it != String_.end(); ++it) {
-	if(*it == '-') *it = '_';
+	if(*it == '-' || isspace(*it)) *it = '_';
 	}
 }
 
@@ -42,7 +45,15 @@ if(Argc_ < 2) {
 
 std::string FileName(Argv_[1]);
 
+#ifdef _MSC_VER
+	#pragma warning(push)
+	#pragma warning(disable: 4996)
+#endif
 fp = fopen(FileName.c_str(), "rb");
+#ifdef _MSC_VER
+	#pragma warning(pop)
+#endif
+
 if(!fp) {
 	printf("Error opening file '%s'.", FileName.c_str());
 	return 1;
@@ -77,6 +88,8 @@ while((c = fgetc(fp)) != EOF) {
 printf("\n\t};\n#else\n");
 printf("extern unsigned char %s[%ld];\n", FileName.c_str(), Size);
 printf("#endif\n\n/* EOF */\n");
+
+fclose(fp);
 
 return 0;
 }
