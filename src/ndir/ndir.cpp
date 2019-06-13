@@ -42,11 +42,11 @@ char DirName[50];
 SYSTEMTIME st;
 
 GetLocalTime(&st);
-GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "yyMMdd", DirName, 20);
+GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "yy-MM-dd", DirName, 20);
 
 if(Argc_ == 2 && THelper::addTime(Argv_[1])) {
    GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOSECONDS | TIME_FORCE24HOURFORMAT,
-		&st, "-HHmm", DirName + 6, 20);
+		&st, "_HH-mm", DirName + 6, 20);
    }
 return (CreateDirectoryA(DirName, NULL) != 0)? 0: 1;
 }
