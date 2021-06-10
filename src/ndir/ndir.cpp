@@ -7,6 +7,7 @@
 //---------------------------------------------------------------------------
 #include <windows.h>
 #include <stdio.h>
+#include <ctime>
 
 //---------------------------------------------------------------------------
 int main(int Argc_, char *Argv_[])
@@ -20,12 +21,13 @@ int main(int Argc_, char *Argv_[])
 				"Switches:\n"
 				"\t-t - add time to the directory name;\n"
 				"\t-m - year and month only;\n"
+				"\t-r - append an underscore and a random number from 00001 to 32768 to the name;\n"
 				"\t-p - only print the name for a new directory, the directory is not being created.");
 		}
 	};
 
 	// ---
-	bool PrintOnly = false, AddTime = false, YearAndMonthOnly = false;
+	bool PrintOnly = false, AddTime = false, YearAndMonthOnly = false, AddRandom = false;
 	
 	for(int i = 1; i < Argc_; ++i) {
 		const char* Arg = Argv_[i];
@@ -42,6 +44,9 @@ int main(int Argc_, char *Argv_[])
 		else if(!strcmp(Arg, "-p") || !strcmp(Arg, "-P")) {
 			PrintOnly = true;
 		}
+		else if(!strcmp(Arg, "-r") || !strcmp(Arg, "-R")) {
+			AddRandom = true;
+		}
 		else {
 			printf("Invalid switch '%s'.\n", Arg);
 			THelper::usage();
@@ -49,14 +54,28 @@ int main(int Argc_, char *Argv_[])
 		}
 	}
 
-	char DirName[64];
+	const size_t BUFFER_SIZE = 128;
+	char DirName[BUFFER_SIZE];
 	SYSTEMTIME st;
 
 	GetLocalTime(&st);
-	GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, YearAndMonthOnly ? "yy-MM": "yy-MM-dd", DirName, 20);
+	GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, YearAndMonthOnly ? "yy-MM": "yy-MM-dd", DirName, (int)BUFFER_SIZE);
+	size_t CurrentSize = strlen(DirName);
 	if(AddTime) {
-		GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOSECONDS | TIME_FORCE24HOURFORMAT,
-			&st, "_HH-mm", DirName + strlen(DirName), 20);
+		CurrentSize += (size_t)GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, TIME_NOSECONDS | TIME_FORCE24HOURFORMAT,
+			&st, "_HH-mm", DirName + CurrentSize, int(BUFFER_SIZE - CurrentSize));
+	}
+	if(AddRandom) {
+		size_t CurrentSize = strlen(DirName);
+		#ifdef _MSC_VER
+			#pragma warning(push)
+			#pragma warning(disable: 4996)
+		#endif
+		srand((unsigned)time(NULL));
+			sprintf(DirName + CurrentSize, "_%05d", int(rand() + 1));
+		#ifdef _MSC_VER
+			#pragma warning(pop)
+		#endif
 	}
 	if(PrintOnly) {
 		puts(DirName);
